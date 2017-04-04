@@ -25,7 +25,7 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
   private int score;
   private int[] scoreColor;
   private int level;
-  private final int scoreColumn = 8;
+  private final int scoreRow = 0;
   private final int levelDifference = 10; // 10 hits increases level
 
   // All time units are in seconds.
@@ -48,9 +48,10 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
   private ShooterBoard board;
 
   // Pixels we are actually using.
-  private final int height = 15;
+  private final int verticalOffset = 1; // Leave one row empty at the top.
+  private final int height = 14;
   private final int width = 8;
-  private int[][][] rgb = new int[width][height][3];
+  private int[][][] rgb = new int[width][height + verticalOffset][3];
 
   public ShooterPlugin(Display2D display, double framerate) throws IOException {
     super(display, framerate);
@@ -66,7 +67,7 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
 
     gameState = State.IDLE;
 
-    board = new ShooterBoard(width, height, 2);
+    board = new ShooterBoard(width, height, verticalOffset, 2);
 
     scoreColor = new int[] {Color.orange.getRed(), Color.orange.getGreen(), Color.orange.getBlue()};
 
@@ -175,7 +176,7 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
     }
     if (draw) {
       for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
+        for (int j = 0; j < height + verticalOffset; j++) {
           display.setPixelRGB(i, j, rgb[i][j][0], rgb[i][j][1], rgb[i][j][2]);
         }
       }
@@ -195,6 +196,7 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
         board.startGame();
         gameState = State.GAME;
         score = 0;
+        level = 1;
         break;
       case GAME:
         // Moves defender or shoots.
@@ -211,7 +213,7 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
               // TODO: trigger some sort of special animation?
               score += 1;
               level = (score / levelDifference) + 1;
-              animStep = (.80 - .2 * level);
+              animStep = (.80 - .1 * level);
               System.out.println("hit, score: " + score + " level: " + level);
             }
             break;
@@ -224,9 +226,9 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
   }
 
   private void drawScore(Display2D display) {
-    for (int i = 0; i < height; i++) {
+    for (int i = 0; i < width; i++) {
       if ((score & 1<<i) > 0) {
-        display.setPixelRGB(scoreColumn, i, scoreColor[0], scoreColor[1], scoreColor[2]);
+        display.setPixelRGB(width - i, scoreRow, scoreColor[0], scoreColor[1], scoreColor[2]);
       }
     }
   }

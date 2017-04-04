@@ -15,6 +15,7 @@ public class ShooterBoard {
   private int[][] colors = new int[maxHitPoints + 1][3];
   private final int width;
   private final int height;
+  private final int verticalOffset;
   private final int scale; // how wide each object is in pixels
   private int[][] ships; // each entry is a possible ship location
   private int defender; // column position in {0, 1, 2, 3}
@@ -24,12 +25,13 @@ public class ShooterBoard {
   // to stay consistent with graphics conventions.
   private int[][][] rgb;
 
-  public ShooterBoard(int _width, int _height, int _scale) {
+  public ShooterBoard(int _width, int _height, int _verticalOffset, int _scale) {
     width = _width;
     height = _height;
+    verticalOffset = _verticalOffset;
     scale = _scale;
     ships = new int[width][height];
-    rgb = new int[width * scale][height][3];
+    rgb = new int[width * scale][height + verticalOffset][3];
     int MAX_WIDTH = 9;
     int MAX_HEIGHT = 17;
     assert width * scale <= MAX_WIDTH;
@@ -63,14 +65,14 @@ public class ShooterBoard {
   private void updateDefender(int col) {
     // Clear old squares.
     for (int k = 0; k < 3; k++) {
-      rgb[2*defender][height - 1][k] = 0;
-      rgb[2*defender + 1][height - 1][k] = 0;
+      rgb[2*defender][height - 1 + verticalOffset][k] = 0;
+      rgb[2*defender + 1][height - 1 + verticalOffset][k] = 0;
     }
     // Update column and color in the correct entries in rgb.
     defender = col;
     for (int k = 0; k < 3; k++) {
-      rgb[2*defender][height - 1][k] = defenderColor[k];
-      rgb[2*defender + 1][height - 1][k] = defenderColor[k];
+      rgb[2*defender][height - 1 + verticalOffset][k] = defenderColor[k];
+      rgb[2*defender + 1][height - 1 + verticalOffset][k] = defenderColor[k];
     }
   }
 
@@ -79,8 +81,8 @@ public class ShooterBoard {
     ships[i][j] = val;
     // Update rgb.
     for (int k = 0; k < 3; k++) {
-      rgb[2*i][j][k] = colors[val][k];
-      rgb[2*i+1][j][k] = colors[val][k];
+      rgb[2*i][j + verticalOffset][k] = colors[val][k];
+      rgb[2*i+1][j + verticalOffset][k] = colors[val][k];
     }
   }
 
