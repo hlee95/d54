@@ -98,7 +98,7 @@ public class ShooterBoard {
       }
     }
     for (int i = 0; i < width * scale; i++) {
-      for (int j = 0; j < height; j++) {
+      for (int j = 0; j < height + verticalOffset; j++) {
         for (int k = 0; k < 3; k++) {
           rgb[i][j][k] = 0;
         }

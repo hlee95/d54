@@ -32,9 +32,9 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
   private final double dt;
   private double time;
   private double lastAnimTime;
-  private double animStep = .80; // Time between animations, decreases with level
+  private double animStep = .75; // Time between animations, decreases with level
   private double lastShipSpawnTime;
-  private double newShipSpawnStep = 2.0; // Time between spawns
+  private double newShipSpawnStep = 1.8; // Time between spawns
 
   // For scrolling text display.
   private final String idleText = "P L A Y";
@@ -42,6 +42,7 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
   private int textPos;
   private final double scrollStep = 0.05; // Time to slide characters to the left once
   private double lastScrollTime;
+  private boolean donePrintingScore;
 
   private ArcadeController controller;
 
@@ -116,6 +117,7 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
             System.out.println("game over, score was " + score);
             TwitterClient.tweet("Someone scored " + score + " playing space invaders on the MIT Green Building! #mittetris");
             beginEnd = true;
+            donePrintingScore = false;
             gameState = State.GAME_END;
             break;
           }
@@ -155,10 +157,12 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
           // Reset after we show the whole string and wait a bit.
           if (textPos > 5*text.length() + 8) {
             try {
+              System.out.println("done printing score");
               Thread.sleep(1500);
             } catch (InterruptedException e) {
               System.out.println(e);
             }
+            donePrintingScore = true;
             textPos = -10;
             gameState = State.IDLE;
           }
@@ -175,28 +179,36 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
       rgb = board.getColors();
     }
     if (draw) {
-      for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height + verticalOffset; j++) {
-          display.setPixelRGB(i, j, rgb[i][j][0], rgb[i][j][1], rgb[i][j][2]);
-        }
-      }
-      drawScore(display);
+      drawGameState(display);
     }
   }
 
   // Handle an arcade button event.
   public void arcadeButton(byte b) {
     switch (gameState) {
-      case IDLE:
       case GAME_END:
+        if (!donePrintingScore) {
+          break;
+        }
+      case IDLE:
         // Starts game.
         TwitterClient.tweet("Beginning a game of space invaders on the MIT Green Building! #mittetris");
         textPos = -10; // Reset for next time we draw text
         System.out.println("new game starting");
+        board.endGame();
         board.startGame();
-        gameState = State.GAME;
         score = 0;
         level = 1;
+        rgb = board.getColors();
+        // Clear entire screen.
+        // Need to clear top and bottom row separately.
+        Display2D display = getDisplay();
+        for (int i = 0; i < width; i++) {
+          // display.setPixelRGB(i, 0, 0, 0, 0);
+          display.setPixelRGB(i, height - 1 + verticalOffset, 0, 0, 0);
+        }
+        drawGameState(display);
+        gameState = State.GAME;
         break;
       case GAME:
         // Moves defender or shoots.
@@ -213,7 +225,8 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
               // TODO: trigger some sort of special animation?
               score += 1;
               level = (score / levelDifference) + 1;
-              animStep = (.80 - .1 * level);
+              animStep = .75 * Math.pow(.92, level);
+              newShipSpawnStep = 1.8 * Math.pow(.92, level);
               System.out.println("hit, score: " + score + " level: " + level);
             }
             break;
@@ -231,6 +244,15 @@ public class ShooterPlugin extends DisplayPlugin implements ArcadeListener {
         display.setPixelRGB(width - i, scoreRow, scoreColor[0], scoreColor[1], scoreColor[2]);
       }
     }
+  }
+
+  private void drawGameState(Display2D display) {
+    for (int i = 0; i < width; i++) {
+      for (int j = 0; j < height + verticalOffset; j++) {
+        display.setPixelRGB(i, j, rgb[i][j][0], rgb[i][j][1], rgb[i][j][2]);
+      }
+    }
+    drawScore(display);
   }
 
 }
